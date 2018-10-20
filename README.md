@@ -54,13 +54,22 @@
 
 ### Git
 
-1. 修改默认提交编译器
+1.  修改默认提交编译器
 ```shell
     git config --global core.editor vim
 ```
-2. 如何提交一个空目录
+2.  如何提交一个空目录
 ```shell
     find . -type d -empty -exec touch {}/.gitignore \;
+```
+3.  如何修改提交的错误作者信息
+```shell
+    git filter-branch -f --env-filter \
+    "GIT_AUTHOR_NAME='Newname'; GIT_AUTHOR_EMAIL='newemail'; \
+    GIT_COMMITTER_NAME='committed-name'; GIT_COMMITTER_EMAIL='committed-email';" HEAD
+```
+```shell
+    git push origin --force --all
 ```
 
 ## [APUE](https://github.com/stanleyguo0207/notes/tree/master/apue/notes/apue.md)
@@ -69,16 +78,16 @@
 
 - apue.h 缺失
 ```markdown
-    download
-    notes/apue/res/src.3e.tar.gz     
-    tar -xzvf src.3e.tar.gz
+download
+notes/apue/res/src.3e.tar.gz     
+tar -xzvf src.3e.tar.gz
 
-    cp ./apue.3e/include/apue.h /usr/include/
-    cp ./apue.3e/lib/error.c /usr/include/
+cp ./apue.3e/include/apue.h /usr/include/
+cp ./apue.3e/lib/error.c /usr/include/
 
-    编辑/usr/include/apue.h文件
-    在文件最后#endif前加上包含error.c的代码：
-    #include "error.c";
+编辑/usr/include/apue.h文件
+在文件最后#endif前加上包含error.c的代码：
+#include "error.c";
 ```
 
 ## [CPP](https://github.com/stanleyguo0207/notes/tree/master/cpp/notes/cpp.md)
