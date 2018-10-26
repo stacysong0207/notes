@@ -1524,7 +1524,7 @@ char d_name[];      // null-terminated filename
 chdir或fchdir函数可以用来更改当前工作目录
 <a id="chdir"></a><a id="fchdir"></a>
 ```c
-#include <stdio.h>
+#include <unistd.h>
 
 /**
  * @return 0    成功
@@ -1534,6 +1534,34 @@ chdir或fchdir函数可以用来更改当前工作目录
 int chdir(const char *pathname);
 int fchdir(int fd);
 ```
+
+案例结果
+```shell
+> pwd
+/notes/apue/code/bin
+> ./c_00019_chdir 
+chdir to /tmp succeeded
+> pwd
+/notes/apue/code/bin
+```
+
+Linux内核可以确定完成路径名。完整路径名的各个部分分布在mount表和dcahe表中，然后进行重新组装，比如在读取/proc/self/cew符号链接时。
+
+getcwd获取当前工作目录的完整的绝对路径名
+```c
+#include <unistd.h>
+
+/**
+ * @param buf       缓冲区地址
+ * @param size      缓冲区的长度(字节为单位)
+ * @return buf      成功
+ * @return NULL     失败
+ */
+char *getcwd(char *buf, size_t size);
+```
+buf缓冲区必须有足够的长度以容纳绝对路径名再加上一个终止null字符，否则返回错误。
+
+
 
 ## 5. 标准I/O库
 ## 6. 系统数据文件和信息
