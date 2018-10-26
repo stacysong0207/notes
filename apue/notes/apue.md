@@ -48,6 +48,7 @@
         - [4.19. futimens、utimensat和utimes](#419-futimensutimensat和utimes)
         - [4.20 mkdir、mkdirat和rmdir](#420-mkdirmkdirat和rmdir)
         - [4.21. 读目录](#421-读目录)
+        - [4.22. chdir、fchdir和getcwd](#422-chdirfchdir和getcwd)
     - [5. 标准I/O库](#5-标准io库)
     - [6. 系统数据文件和信息](#6-系统数据文件和信息)
     - [7. 进程环境](#7-进程环境)
@@ -1515,6 +1516,24 @@ char d_name[];      // null-terminated filename
 ```
 
 遍历层次结构的函数ftw、nftw。ftw跟随符号链接，nftw不跟随符号链接。
+
+### 4.22. chdir、fchdir和getcwd
+
+每个进程都有一个当前工作目录，此目录是搜索所有相对路径名的起点。
+
+chdir或fchdir函数可以用来更改当前工作目录
+<a id="chdir"></a><a id="fchdir"></a>
+```c
+#include <stdio.h>
+
+/**
+ * @return 0    成功
+ * @return -1   失败
+ */
+
+int chdir(const char *pathname);
+int fchdir(int fd);
+```
 
 ## 5. 标准I/O库
 ## 6. 系统数据文件和信息
