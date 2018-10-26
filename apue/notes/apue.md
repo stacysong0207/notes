@@ -1571,10 +1571,32 @@ chdir跟随符号链接，但是当getcwd沿目录树上溯遇到符号链接时
 st_dev和st_rdev这两个字段有关规则：
 -   每个文件系统所在的存储设备都有其主、次设备号表示。设备号所用的数据类型是基本系统数据类型dev_t。主设备号标识设备驱动设备，有时编码为与其通信的外设板；次设备号标识特定的子设备。
 -   我们通常可以使用两个宏：major和minor来访问主、次设备号，大多数实现都定义这两个宏。
+    **注意**基于BSD的UNIX系统将它们定义在\<sys/types>中。Solaris在\<sys/mkdev.h>中定义了它们的函数原型，因为在\<sys/sysmacros.h>中的宏定义都弃用了。Linux将它们定义在\<sys/sysmacros.h>中，而该头文件又包含在\<sys/type.h>中。Centos6.9 需要包含\<sys/sysmacros.h>头文件。
 -   系统中与每个文件名关联的st_dev值是文件系统的设备号，该文件系统包含了一文件名以及与其对应的i节点。
 -   只有字符特殊文件和块特殊文件才有st_rdev值。此值包含实际设备的设备号。
 
+```shell
+> ./c_00021_devrdev / /home/stanley/ /dev/tty[01]
+/: dev = 8/3
+/home/stanley/: dev = 8/3
+/dev/tty0: dev = 0/5 (character) rdev = 4/0
+/dev/tty1: dev = 0/5 (character) rdev = 4/1
 
+> mount
+/dev/sda3 on / type ext4 (rw)
+proc on /proc type proc (rw)
+sysfs on /sys type sysfs (rw)
+devpts on /dev/pts type devpts (rw,gid=5,mode=620)
+tmpfs on /dev/shm type tmpfs (rw,rootcontext="system_u:object_r:tmpfs_t:s0")
+/dev/sda1 on /boot type ext4 (rw)
+none on /proc/sys/fs/binfmt_misc type binfmt_misc (rw)
+
+> ls -l /dev/tty[01] /dev/sda[34]
+brw-rw----. 1 root disk 8, 3 Oct 26 09:38 /dev/sda3
+crw--w----. 1 root tty  4, 0 Oct 26 09:38 /dev/tty0
+crw--w----. 1 root tty  4, 1 Oct 26 09:38 /dev/tty1
+```
+/dev/tty[01] 属于shell正则表达式语言以缩短所需的输入量。shell将字符串/dev/tty[01]扩展为 /dev/tty0 /dev/tty1。
 
 ## 5. 标准I/O库
 ## 6. 系统数据文件和信息
