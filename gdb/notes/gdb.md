@@ -14,6 +14,9 @@
         - [3.3. 调试已运行的程序](#33-调试已运行的程序)
         - [3.4. 暂停/恢复程序](#34-暂停恢复程序)
             - [3.4.1. 设置断点（BreakPoint）](#341-设置断点breakpoint)
+            - [3.4.2. 设置观察点（WatchPoint）](#342-设置观察点watchpoint)
+            - [3.4.3. 设置捕捉点（CatchPoint）](#343-设置捕捉点catchpoint)
+            - [3.4.4. 维护停止点](#344-维护停止点)
 
 <!-- /TOC -->
 
@@ -374,3 +377,82 @@ make <make-args>
 查看断点时，可使用info命令，如下所示：（注：n表示断点号）
 -   ```info breakpoints [n]```
 -   ```info break [n]```
+
+#### 3.4.2. 设置观察点（WatchPoint）
+
+观察点一般来观察某个表达式（变量也是一种表达式）的值是否有变化了，如果有变化，马上停住程序。我们有下面的几种方法来设置观察点：
+
+-   ```watch <expr>```
+
+    为表达式（变量）expr设置一个观察点。一量表达式值有变化时，马上停住程序。
+        
+-   ```rwatch <expr>```
+    
+    当表达式（变量）expr被读时，停住程序。
+        
+-   ```awatch <expr>```
+    
+    当表达式（变量）的值被读或被写时，停住程序。
+    
+-   ```info watchpoints```
+
+    列出当前所设置了的所有观察点。
+
+#### 3.4.3. 设置捕捉点（CatchPoint）
+
+你可设置捕捉点来补捉程序运行时的一些事件。如：载入共享库（动态链接库）或是C++的异常。设置捕捉点的格式为：
+```shell
+catch <event>
+```
+当event发生时，停住程序。event可以是下面的内容：
+1.  ```throw``` 一个C++抛出的异常。（throw为关键字）
+2.  ```catch``` 一个C++捕捉到的异常。（catch为关键字）
+3.  ```exec``` 调用系统调用exec时。（exec为关键字，目前此功能只在HP-UX下有用）
+4.  ```fork``` 调用系统调用fork时。（fork为关键字，目前此功能只在HP-UX下有用）
+5.  ```vfork``` 调用系统调用vfork时。（vfork为关键字，目前此功能只在HP-UX下有用）
+6.  ```load``` 或 ```load <libname>``` 载入共享库（动态链接库）时。（load为关键字，目前此功能只在HP-UX下有用）
+7.  ```unload``` 或 ```unload <libname>``` 卸载共享库（动态链接库）时。（unload为关键字，目前此功能只在HP-UX下有用）
+
+```shell
+tcatch <event>
+```
+只设置一次捕捉点，当程序停住以后，应点被自动删除。
+
+#### 3.4.4. 维护停止点
+
+上面说了如何设置程序的停止点，GDB中的停止点也就是上述的三类。在GDB中，如果你觉得已定义好的停止点没有用了，你可以使用**delete**、**clear**、**disable**、**enable**这几个命令来进行维护。
+
+-   ```clear```
+
+    清除所有的已定义的停止点。
+
+-   ```clear <function>```
+    ```clear <filename:function>```
+
+    清除所有设置在函数上的停止点。
+
+-   ```clear <linenum>```
+    ```clear <filename:linenum>```
+
+    清除所有设置在指定行上的停止点。
+
+-   ```delete [breakpoints] [range...]```
+
+    删除指定的断点，breakpoints为断点号。如果不指定断点号，则表示删除所有的断点。range 表示断点号的范围（如：3-7）。其简写命令为d。
+
+比删除更好的一种方法是**disable**停止点，**disable**了的停止点，GDB不会删除，当你还需要时，**enable**即可，就好像回收站一样。
+
+-   ```disable [breakpoints] [range...]```
+
+    **disable**所指定的停止点，**breakpoints**为停止点号。如果**什么都不指定**，表示disable所有的停止点。简写命令是**dis**.
+
+-   ```enable [breakpoints] [range...]```
+        enable所指定的停止点，breakpoints为停止点号。
+
+-   ```enable [breakpoints] once range...```
+
+    enable所指定的停止点一次，当程序停止后，该停止点马上被GDB自动**disable**。
+
+-   ```enable [breakpoints] delete range...```
+
+    enable所指定的停止点一次，当程序停止后，该停止点马上被GDB自动删除。
