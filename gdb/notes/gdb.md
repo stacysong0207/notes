@@ -8,6 +8,7 @@
     - [1. GDB概述](#1-gdb概述)
         - [1.1. 一个调试案例](#11-一个调试案例)
     - [2. GDB使用](#2-gdb使用)
+    - [3. GDB命令概貌](#3-gdb命令概貌)
 
 <!-- /TOC -->
 
@@ -197,3 +198,79 @@ GDB启动时，可以加上一些GDB的启动开关，详细的开关可以用gd
 -   -directory \<directory><br>
     -d \<directory><br>
     加入一个源文件的搜索路径。默认搜索路径是环境变量中PATH所定义的路径。
+
+## 3. GDB命令概貌
+
+启动gdb后，就你被带入gdb的调试环境中，就可以使用gdb的命令开始调试程序了，gdb的命令可以使用help命令来查看，如下所示：
+```shell
+GNU gdb (GDB) Red Hat Enterprise Linux (7.2-92.el6)
+Copyright (C) 2010 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type "show copying"
+and "show warranty" for details.
+This GDB was configured as "x86_64-redhat-linux-gnu".
+For bug reporting instructions, please see:
+<http://www.gnu.org/software/gdb/bugs/>.
+(gdb) help
+List of classes of commands:
+
+aliases -- Aliases of other commands
+breakpoints -- Making program stop at certain points
+data -- Examining data
+files -- Specifying and examining files
+internals -- Maintenance commands
+obscure -- Obscure features
+running -- Running the program
+stack -- Examining the stack
+status -- Status inquiries
+support -- Support facilities
+tracepoints -- Tracing of program execution without stopping the program
+user-defined -- User-defined commands
+
+Type "help" followed by a class name for a list of commands in that class.
+Type "help all" for the list of all commands.
+Type "help" followed by command name for full documentation.
+Type "apropos word" to search for commands related to "word".
+Command name abbreviations are allowed if unambiguous.
+(gdb) 
+```
+gdb的命令很多，gdb把之分成许多个种类。help命令只是例出gdb的命令种类，如果要看种类中的命令，可以使用help \<class> 命令，如：help breakpoints，查看设置断点的所有命令。也可以直接help \<command>来查看命令的帮助。
+
+gdb中，输入命令时，可以不用打全命令，只用打命令的前几个字符就可以了，当然，命令的前几个字符应该要标志着一个唯一的命令，在Linux下，你可以敲击两次TAB键来补齐命令的全称，如果有重复的，那么gdb会把其例出来。
+
+-   示例一：在进入函数func时，设置一个断点。可以敲入break func，或是直接就是b func
+    ```shell
+    (gdb) b func
+    Breakpoint 1 at 0x8048458: file hello.c, line 10.
+    ```
+    
+-   示例二：敲入b按两次TAB键，你会看到所有b打头的命令：
+    ```shell
+    (gdb) b
+    backtrace  break      bt
+    (gdb)
+    ```
+
+-   示例三：只记得函数的前缀，可以这样：
+    ```shell
+    (gdb) b make_ <按TAB键>
+    （再按下一次TAB键，你会看到:）
+    make_a_section_from_file     make_environ
+    make_abs_section             make_function_type
+    make_blockvector             make_pointer_type
+    make_cleanup                 make_reference_type
+    make_command                 make_symbol_completion_list
+    (gdb) b make_
+    ```
+    GDB把所有make开头的函数全部例出来给你查看。
+    
+-   示例四：调试C++的程序时，有可以函数名一样。如：
+    ```shell
+    (gdb) b 'bubble( M-? 
+    bubble(double,double)    bubble(int,int)
+    (gdb) b 'bubble(
+    ```
+    你可以查看到C++中的所有的重载函数及参数。（注：M-?和“按两次TAB键”是一个意思）
+
+要退出gdb时，只用发quit或命令简称q就行了。
