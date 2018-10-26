@@ -12,6 +12,8 @@
         - [3.1. GDB中运行UNIX的shell程序](#31-gdb中运行unix的shell程序)
         - [3.2. 在GDB中运行程序](#32-在gdb中运行程序)
         - [3.3. 调试已运行的程序](#33-调试已运行的程序)
+        - [3.4. 暂停/恢复程序](#34-暂停恢复程序)
+            - [3.4.1. 设置断点（BreakPoint）](#341-设置断点breakpoint)
 
 <!-- /TOC -->
 
@@ -325,3 +327,50 @@ make <make-args>
 
 1.  在UNIX下用ps查看正在运行的程序的PID（进程ID），然后用```gdb <program> PID```格式挂接正在运行的程序。
 2.  先用```gdb <program>```关联上源代码，并进行gdb，在gdb中用attach命令来挂接进程的PID。并用**detach**来取消挂接的进程。
+
+### 3.4. 暂停/恢复程序
+
+调试程序中，暂停程序运行是必须的，GDB可以方便地暂停程序的运行。你可以设置程序的在哪行停住，在什么条件下停住，在收到什么信号时停往等等。以便于你查看运行时的变量，以及运行时的流程。
+
+当进程被gdb停住时，你可以使用```info program```来查看程序的是否在运行，进程号，被暂停的原因。
+
+在gdb中，我们可以有以下几种暂停方式：**断点**（BreakPoint）、**观察点**（WatchPoint）、**捕捉点**（CatchPoint）、**信号**（Signals）、**线程停止**（Thread Stops）。如果要恢复程序运行，可以使用**c**或是**continue**命令。
+
+#### 3.4.1. 设置断点（BreakPoint）
+
+我们用break命令来设置断点。正面有几点设置断点的方法:
+
+-   ```break <function> ```
+
+    在进入指定函数时停住。C++中可以使用class::function或function(type,type)格式来指定函数名。    
+-   ```break <linenum>```
+
+    在指定行号停住。
+-   ```break +offset```
+    ```break -offset```
+
+    在当前行号的前面或后面的offset行停住。offiset为自然数。
+
+-   ```break filename:linenum```
+    
+    在源文件filename的linenum行处停住。
+
+-   ```break filename:function```
+    
+    在源文件filename的function函数的入口处停住。
+
+-   ```break *address```
+    
+    在程序运行的内存地址处停住。
+
+-   ```break```
+
+    break命令没有参数时，表示在下一条指令处停住。
+
+-   ```break ... if <condition>```
+
+    ...可以是上述的参数，condition表示条件，在条件成立时停住。比如在循环境体中，可以设置```break if i=100```，表示当i为100时停住程序。
+
+查看断点时，可使用info命令，如下所示：（注：n表示断点号）
+-   ```info breakpoints [n]```
+-   ```info break [n]```
