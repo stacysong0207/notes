@@ -22,6 +22,7 @@
             - [3.4.7. 断点菜单](#347-断点菜单)
             - [3.4.8. 恢复程序运行和单步调试](#348-恢复程序运行和单步调试)
             - [3.4.9. 信号（Signals）](#349-信号signals)
+            - [3.4.10. 线程（Thread Stops）](#3410-线程thread-stops)
 
 <!-- /TOC -->
 
@@ -603,3 +604,16 @@ handle <signal> <keywords...>
     ```info handle```
 
     查看有哪些信号在被GDB检测中。
+
+#### 3.4.10. 线程（Thread Stops）
+
+如果你程序是多线程的话，你可以定义你的断点是否在所有的线程上，或是在某个特定的线程。GDB很容易帮你完成这一工作。
+```shell
+break <linespec> thread <threadno>
+break <linespec> thread <threadno> if ...
+```
+**linespec**指定了断点设置在的源程序的行号。**threadno**指定了线程的ID，注意，**这个ID是GDB分配的**，你可以通过“**info threads**”命令来查看正在运行程序中的线程信息。如果你不指定thread \<threadno>则表示你的断点设在所有线程上面。你还可以为某线程指定断点条件。如：
+```shell
+(gdb) break frik.c:13 thread 28 if bartab > lim
+```
+当你的程序被GDB停住时，所有的运行线程都会被停住。这方便你你查看运行程序的总体情况。而在你恢复程序运行时，所有的线程也会被恢复运行。那怕是主进程在被单步调试时。
