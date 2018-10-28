@@ -17,6 +17,7 @@
             - [3.4.2. 设置观察点（WatchPoint）](#342-设置观察点watchpoint)
             - [3.4.3. 设置捕捉点（CatchPoint）](#343-设置捕捉点catchpoint)
             - [3.4.4. 维护停止点](#344-维护停止点)
+            - [3.4.5. 停止条件维护](#345-停止条件维护)
 
 <!-- /TOC -->
 
@@ -456,3 +457,19 @@ tcatch <event>
 -   ```enable [breakpoints] delete range...```
 
     enable所指定的停止点一次，当程序停止后，该停止点马上被GDB自动删除。
+
+#### 3.4.5. 停止条件维护
+
+前面在说到设置断点时，我们提到过可以设置一个条件，当条件成立时，程序自动停止，这是一个非常强大的功能，这里，我想专门说说这个条件的相关维护命令。一般来说，为断点设置一个条件，我们使用if关键词，后面跟其断点条件。并且，条件设置好后，我们可以用condition命令来修改断点的条件。（只有break和watch命令支持if，catch目前暂不支持if）
+-   ```condition <bnum> <expression>```
+
+    修改断点号为bnum的停止条件为expression。
+
+-   ```condition <bnum>```
+
+    清除断点号为bnum的停止条件。
+
+还有一个比较特殊的维护命令ignore，你可以指定程序运行时，忽略停止条件几次。
+-   ```ignore <bnum> <count>```
+
+    表示忽略断点号为bnum的停止条件count次。
