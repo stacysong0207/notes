@@ -19,6 +19,7 @@
             - [3.4.4. 维护停止点](#344-维护停止点)
             - [3.4.5. 停止条件维护](#345-停止条件维护)
             - [3.4.6. 为停止点设定运行命令](#346-为停止点设定运行命令)
+            - [3.4.7. 断点菜单](#347-断点菜单)
 
 <!-- /TOC -->
 
@@ -495,3 +496,27 @@ end
 断点设置在函数foo中，断点条件是x>0，如果程序被断住后，也就是，一旦x的值在foo函数中大于0，GDB会自动打印出x的值，并继续运行程序。
 
 如果你要清除断点上的命令序列，那么只要简单的执行一下commands命令，并直接在打个end就行了
+
+#### 3.4.7. 断点菜单
+
+在C++中，可能会重复出现同一个名字的函数若干次（函数重载），在这种情况下，break \<function>不能告诉GDB要停在哪个函数的入口。当然，你可以使用break \<function(type)>也就是把函数的参数类型告诉GDB，以指定一个函数。否则的话，GDB会给你列出一个断点菜单供你选择你所需要的断点。你只要输入你菜单列表中的编号就可以了。如：
+```shell
+(gdb) b String::after
+[0] cancel
+[1] all
+[2] file:String.cc; line number:867
+[3] file:String.cc; line number:860
+[4] file:String.cc; line number:875
+[5] file:String.cc; line number:853
+[6] file:String.cc; line number:846
+[7] file:String.cc; line number:735
+
+> 2 4 6
+Breakpoint 1 at 0xb26c: file String.cc, line 867.
+Breakpoint 2 at 0xb344: file String.cc, line 875.
+Breakpoint 3 at 0xafcc: file String.cc, line 846.
+Multiple breakpoints were set.
+Use the "delete" command to delete unwanted breakpoints.
+(gdb)
+```
+可见，GDB列出了所有after的重载函数，你可以选一下列表编号就行了。0表示放弃设置断点，1表示所有函数都设置断点。
