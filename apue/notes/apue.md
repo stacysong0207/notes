@@ -54,6 +54,7 @@
     - [5. 标准I/O库](#5-标准io库)
         - [5.1. 流和FILE对象](#51-流和file对象)
         - [5.2. 标准输入、标准输出和标准错误](#52-标准输入标准输出和标准错误)
+        - [5.3. 缓冲](#53-缓冲)
     - [6. 系统数据文件和信息](#6-系统数据文件和信息)
     - [7. 进程环境](#7-进程环境)
     - [8. 进程控制](#8-进程控制)
@@ -1655,6 +1656,109 @@ FILE对象包含了标准I/O库为管理该流需要的所有信息，包括用�
 
 对一个进程预定义了3个流，并且这3个流可以自动地被进程使用，他们是：标准输入、标准输出和标准错误。
 分别与文件描述符STDIN_FILENO、STDOUT_FILENO和STDERR_FILENO所引用的相同。预定义为stdin、stdout和stderr。
+
+### 5.3. 缓冲
+
+标准I/O库提供缓冲的目的是尽可能减少使用read和write调用的次数。
+标准I/O提供了一下3种类型的缓冲。
+1.  全缓冲。在这种情况下，在填满标准I/O缓冲区后才进行实际I/O操作。对于驻留在磁盘上的文件通常是由标准I/O库实施全缓冲的。在一个流上执行第一次I/O操作时，相关标准I/O函数通常调用malloc获得需使用的缓冲区。
+    术语冲洗（flush）说明标准I/O缓冲区的写操作。缓冲区可由标准I/O例程自动冲洗（例如，当填满一个缓冲区时），或者可以调用函数fflush冲洗一个流。在UNIX系统中，flush有两种意思。在标准I/O库方面，flush（冲洗）意味着将缓冲区中的内容写到磁盘上（该缓冲区可能只是部分填满的）。在终端驱动程序方面（例如，tcflush函数），flush（刷清）表示丢弃已存储在缓冲区中的数据。
+2.  行缓冲。在这种情况下，当在输入和输出中遇到换行符时，标准I/O库执行I/O操作。这允许我们一次输出一个字符（用标准库I/O函数fputc），但只有在写了一行之后才进行实际I/O操作。当流涉及终端时，通常使用行缓冲。
+    对于行缓冲有两个限制：
+    -   因为标准库I/O库用来收集每一行的缓冲区的长度是固定的，所有只要填满了缓冲区，那么即使还没有写一个换行符，也进行I/O操作。
+    -   任何时候只要通过标准I/O库要求从（a）一个不带缓冲的流，或者（b）一个行缓冲的流（它从内核请求需要数据）得到输入数据，那么就会冲洗所有行缓冲输出流。
+3.  不带缓冲。标准I/O库不对字符进行缓冲存储。例如，若用标准I/O函数fputs写15个字符到不带缓冲的流中，我们就期望这15个字符能立即输出，很可能s会用write函数将这些字符写到相关联的打开文件中。标准错误流stderr通常是不带缓冲的，这就使得出错信息可以尽快显示出来，而不管它们是否含有一个换行符。
+
+ISO C要求下列缓冲特征。
+-   当且晋档标准输入和标准输出并不指向交互式设备时，它们才是全缓冲的。
+-   标准错误绝不会是全缓冲的。
+很多系统默认下列类型缓冲：
+-   标准错误是不带缓冲的。
+-   若是指向终端设备的流，则是行缓冲的；否则是全缓冲的。
+
+下列两个函数中的一个更改缓冲类型
+<a id="setbuf"></a><a id="setvbuf"></a>
+```c
+#include <stdio.h>
+
+/**
+ * @return 0        成功
+ * @return 非0      失败
+ */
+
+void setbuf(FILE *restrict fp, char *restrict buf);
+int setvbuf(FILE *restrict fp, char *restrict buf, int mode, size_t size);
+```
+这些函数一定要在流已经被打开后调用，而且也应在对该执行任何一个其他操作之前调用。
+setbuf函数打开或关闭缓冲机制。为了带缓冲进行I/O，参数buf必须指向一个长度为BUFSIZ的缓冲区（\<stdio.h>中）。通常在此之后该流就是全缓冲的，但是如果该流与一个终端设备相关，那么某些系统也可将其设置为行缓冲。为了关闭缓冲，将buf设置为NULL。
+使用setvbuf，我们可以精确地说明所需的缓冲类型。这是根据mode参数实现的：
+-   _IOFBF  全缓冲
+-   _IOLBF  行缓冲
+-   _IONBF  不带缓冲
+如果指定一个不带缓冲的流，则忽略buf和size参数。
+如果该流是带缓冲的，而buf是NULL，则标准I/O库将自动地为该流分别适配相当长度的缓冲区。适当长度指的是由常量BUFSIZ所指定的值。
+
+<table>
+    <tr align='middle' valign='middle'>
+        <td>函数</td>
+        <td>mode</td>
+        <td>buf</td>
+        <td>缓冲区及长度</td>
+        <td>缓冲类型</td>
+    </tr>
+    <tr align='middle' valign='middle'>
+        <td rowspan='2'>setbuf</td>
+        <td rowspan='2'></td>
+        <td>非空</td>
+        <td>长度为BUFSIZ的用户缓冲区buf</td>
+        <td>全缓冲或行缓冲</td>
+    </tr>
+    <tr align='middle' valign='middle'>
+        <td>NULL</td>
+        <td>（无缓冲区）</td>
+        <td>不带缓冲</td>
+    </tr>
+    <tr align='middle' valign='middle'>
+        <td rowspan='5'>setvbuf</td>
+        <td rowspan='2'>_IOFBF</td>
+        <td>非空</td>
+        <td>长度为size的用户缓冲区buf</td>
+        <td rowspan='2'>全缓冲</td>
+    </tr>
+    <tr align='middle' valign='middle'>
+        <td>NULL</td>
+        <td>合适长度的系统缓冲区buf</td>
+    </tr>
+    <tr align='middle' valign='middle'>
+        <td rowspan='2'>_IOFBF</td>
+        <td>非空</td>
+        <td>长度为size的用户缓冲区buf</td>
+        <td rowspan='2'>行缓冲</td>
+    </tr>
+    <tr align='middle' valign='middle'>
+        <td>NULL</td>
+        <td>合适长度的系统缓冲区buf</td>
+    </tr>
+    <tr align='middle' valign='middle'>
+        <td>_IONBF</td>
+        <td>（忽略）</td>
+        <td>（无缓冲区）</td>
+        <td>无缓冲区</td>
+    </tr>
+</table>
+
+强制冲洗一个流。
+<a id="fflush"></a>
+```c
+#include <stdio.h>
+
+/**
+ * @return 0        成功
+ * @return EOF      失败
+ */
+int fflush(FILE *fp);
+```
+此函数使该流所有未写的数据都被传送至内核。作为一种特殊情形，如果fp是NULL，则此函数将导致所有输出流被冲洗。
 
 ## 6. 系统数据文件和信息
 ## 7. 进程环境
