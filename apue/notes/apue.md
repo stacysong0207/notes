@@ -56,6 +56,9 @@
         - [5.2. 标准输入、标准输出和标准错误](#52-标准输入标准输出和标准错误)
         - [5.3. 缓冲](#53-缓冲)
         - [5.4. 打开流](#54-打开流)
+        - [5.5 读和写流](#55-读和写流)
+            - [5.5.1. 输入函数](#551-输入函数)
+            - [5.5.2. 输出函数](#552-输出函数)
     - [6. 系统数据文件和信息](#6-系统数据文件和信息)
     - [7. 进程环境](#7-进程环境)
     - [8. 进程控制](#8-进程控制)
@@ -1811,6 +1814,75 @@ type参数指定对该I/O流的读、写方式。
 int fclose(FILE *fp);
 ```
 
+### 5.5 读和写流
+
+1.  每次一个字符的I/O。一次读或写一个字符。如果流是带缓冲的，则标准I/O函数处理所有缓冲。
+2.  每次一行的I/O。如果想要一次读和写一行，则使用fgets和fputs。每行都以一个换行符终止。当调用fgets时，应说明能处理的最大行长。
+3.  直接I/O。fread和fwrite函数支持这种类型的I/O。
+
+#### 5.5.1. 输入函数
+
+<a id="getc"></a><a id="fgetc"></a><a id="getchar"></a>
+```c
+#include <stdio.h>
+
+/**
+ * @return 下一个字符    成功
+ * @return EOF          已到达文件尾端或出错
+ */
+
+int getc(FILE *fp);
+int fgetc(FILE *fp);
+int getchar(void);
+```
+getchar等同于getc(stdin)。getc可被实现为宏，fgetc不能实现为宏。
+1.  getc的参数不应当是具有副作用的表达式，因为它可能会被计算多次。
+2.  fgetc一定是一个函数，所以可以得到其地址。这就允许将fgetc的地址作为一个参数传送给另一个参数。
+3.  因为fgetc所需时间很可能比调用getc要长。
+不管是出错还是到达文件尾端，这3个函数都返回同样的值。
+<a id="ferror"></a><a id="feof"></a><a id="clearerr"></a>
+```c
+#include <stdio.h>
+
+/**
+ * @return 非0（真）    条件为真
+ * @return 0（假）      条件为假
+ */
+
+int ferror(FILE *fp);
+int feof(FILE *fp);
+
+void clearerr(FILE *fp);
+```
+大多数实现中，每个流在FILE对象中维护了两个标志：
+-   出错标志
+-   文件结束标志
+
+调用clearerr可以清除这两个标志。
+从流中读取数据以后，可以调用ungetc将字符再压送回流中。
+<a id="ungetc"></a>
+```c
+#include <stdio.h>
+
+int ungetc(int c, FILE *fp);
+```
+
+#### 5.5.2. 输出函数
+
+<a id="putc"></a><a id="fputc"></a><a id="putchar"></a>
+```c
+#include <stdio.h>
+
+/**
+ * @return c        成功
+ * @return EOF      失败
+ */
+
+int putc(int c, FILE *fp);
+int fputc(int c, FILE *fp);
+int puchar(int c);
+```
+输出函数与输入函数一样，putchar等同于putc(c, stdout)...
 
 ## 6. 系统数据文件和信息
 ## 7. 进程环境
