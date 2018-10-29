@@ -55,6 +55,7 @@
         - [5.1. 流和FILE对象](#51-流和file对象)
         - [5.2. 标准输入、标准输出和标准错误](#52-标准输入标准输出和标准错误)
         - [5.3. 缓冲](#53-缓冲)
+        - [5.4. 打开流](#54-打开流)
     - [6. 系统数据文件和信息](#6-系统数据文件和信息)
     - [7. 进程环境](#7-进程环境)
     - [8. 进程控制](#8-进程控制)
@@ -144,7 +145,7 @@ int open(const char *path, int oflag, ... /* mode_t mode */);
 int openat(int fd, const char *path, int oflag, ... /* mode_t mode */);
 ```
 
-**oflag参数**
+<a id="oflag">**oflag参数**</a>
 ```c
 O_RDONLY		只读打开
 O_WRONLY		只写打开
@@ -1760,6 +1761,56 @@ setbuf函数打开或关闭缓冲机制。为了带缓冲进行I/O，参数buf�
 int fflush(FILE *fp);
 ```
 此函数使该流所有未写的数据都被传送至内核。作为一种特殊情形，如果fp是NULL，则此函数将导致所有输出流被冲洗。
+
+### 5.4. 打开流
+
+<a id="fopen"></a><a id="freopen"></a><a id="fdopen"></a>
+```c
+#include <stdio.h>
+
+/**
+ * @return 文件指针      成功
+ * @return NULL         失败
+ */
+
+FILE *fopen(const char *restrict pathname, const char *restrict type);
+FILE *freopen(const char *restrict pathname, const char *restrict type, FILE *restrict fp);
+FILE *fdopen(int fd, const char *type);
+```
+type参数指定对该I/O流的读、写方式。
+
+| type         | 说明                                | open标志 |
+| -----------  | ----------------------------------- | -------- |
+| r或rb        | 为读而打开                           | <a href="#oflag">`O_RDONLY`</a> |
+| w或wb        | 把文件截断至0长，或为写而创建         | <a href="#oflag">`O_WRONLY|O_CREAT|O_TRUNC`</a> |
+| a或ab        | 追加；为在文件尾写而打开，成为写而创建 | <a href="#oflag">`O_WRONLY|O_CREAT|O_APPEND`</a> |
+| r+或r+b或rb+ | 为读和写而打开                       | <a href="#oflag">`O_RDWR`</a> |
+| w+或w+b或wb+ | 把文件截断至0长，或为读和写而打开      | <a href="#oflag">`O_RDWR|O_CREAT|O_TRUNC`</a> |
+| a+或a+b或ab+ | 为在文件尾读和写而打开或创建          | <a href="#oflag">`O_RDWR|O_CREAT|O_APPEND`</a> |
+
+使用字符b作为type的一部分，这使得标准I/O系统可以区分文本文件和二进制文件。
+当用追加写类型打开一个文件后，每次写都将数据写到文件的当前尾端位。如果有多个进程用哪个标准I/O追加写方式打开同一文件，那么来自每个进程的数据都将正确地写到文件中。
+以读和写类型打开一个文件时（type+号），具有下列限制。
+-   如果中间没有fflush、fseek、fsetpos或rewind，则在输出的后面不能直接跟随输入。
+-   如果中间没有fssek、fsetpos或rewind，或者一个输入操作没有达到文件尾端，则在输入操作后不能直接跟随输出。
+
+| 限制                                  | r                    | w                    | a                      | r+                         | w+                         | a+                            |
+| ------------------------------------- | -------------------- | -------------------- | ---------------------- | -------------------------- | -------------------------- | ----------------------------- |
+| 文件必须已存在<br>放弃文件以前的内容     | &radic; <br><br>     | <br>&radic;          |                        | &radic; <br><br>           | <br>&radic;                |                               |
+| 流可以读<br>流可以写<br>流只可在尾端处写 | &radic; <br><br><br> | <br>&radic; <br><br> | <br>&radic;<br>&radic; | &radic;<br>&radic;<br><br> | &radic;<br>&radic;<br><br> | &radic;<br>&radic;<br>&radic; |
+
+除非流引用终端设备，否则按系统默认，流被打开时是全缓冲的。
+<a id="fclose"></a>
+```c
+#include <stdio.h>
+
+/**
+ * @return 0        成功
+ * @return EOF      失败
+ */
+int fclose(FILE *fp);
+```
+
 
 ## 6. 系统数据文件和信息
 ## 7. 进程环境
