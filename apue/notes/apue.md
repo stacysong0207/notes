@@ -60,6 +60,8 @@
             - [5.5.1. 输入函数](#551-输入函数)
             - [5.5.2. 输出函数](#552-输出函数)
         - [5.6. 每次一行I/O](#56-每次一行io)
+        - [5.7. 标准I/O的效率](#57-标准io的效率)
+        - [5.8. 二进制I/O](#58-二进制io)
     - [6. 系统数据文件和信息](#6-系统数据文件和信息)
     - [7. 进程环境](#7-进程环境)
     - [8. 进程控制](#8-进程控制)
@@ -1915,6 +1917,50 @@ int puts(const char *str);
 ```
 尽量使用fputs，而不要使用~~puts~~，puts比fputs要多写一个换行符在结尾。
 
+### 5.7. 标准I/O的效率
+
+标准I/O与直接调用read和write函数相比并不慢多少。对于大多数比较复杂的应用程序，最主要的用户CPU时间是由应用本身的各种处理消耗的，而不是由标准I/O例程消耗的。
+
+### 5.8. 二进制I/O
+
+<a id="fread"></a><a id="fwrite"></a>
+```c
+#include <stdio.h>
+
+/**
+ * @return 读或写的对象数
+ */
+
+size_t fread(void *restrict ptr, size_t size, size_t nobj, FILE *restrict fp);
+size_t fwrite(const void *restrict ptr, size_t size, size_t nobj, FILE *restrict fp);
+```
+两种常见用法：
+1.  读或写一个二进制数组。将2~5个元素写到文件上。
+    ```c
+    float data[10];
+
+    if(4 != fwrite(&data[2], sizeof(float), 4, fp)) {
+        err_sys("fwrite error");
+    }
+    ```
+    size为每个数组元素的长度，nobj为欲写的元素个数。
+2.  读或写一个结构。
+    ```c
+    struct {
+        short count;
+        long total;
+        char name[NAMESIZE];
+    } item;
+    
+    if(1 != fwrite(&item, sizeof(item), 1, fp)) {
+        err_sys("fwite, error");
+    }
+    ```
+    size为结构的长度，nobj为1（要写的对象个数）。
+
+对于读，如果出错或到达文件尾端，则此数字可以少于nobj。在这种情况，应调用ferror或feof以判断究竟是哪一种情况。对于写，如果返回值少于所要求的nobj，则出错。
+
+fread和fwrite不具有跨平台性，甚至在同一平台也有可能会出现不同的情况，取决于结构体的结构优化和存储方式。
 
 
 ## 6. 系统数据文件和信息
