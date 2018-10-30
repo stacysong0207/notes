@@ -30,6 +30,8 @@
 
 ## 前言
 
+**更多学习笔记见**https://github.com/stanleyguo0207/notes
+
 makefile基于自动化体系中重要的一笔，所有打算花点时间整理一下，文章摘自博客地https://blog.csdn.net/haoel/article/details/2879
 
 ## 1. GDB概述
