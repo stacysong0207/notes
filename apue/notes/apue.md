@@ -59,6 +59,13 @@
         - [5.5 读和写流](#55-读和写流)
             - [5.5.1. 输入函数](#551-输入函数)
             - [5.5.2. 输出函数](#552-输出函数)
+        - [5.6. 每次一行I/O](#56-每次一行io)
+        - [5.7. 标准I/O的效率](#57-标准io的效率)
+        - [5.8. 二进制I/O](#58-二进制io)
+        - [5.9. 定位流](#59-定位流)
+        - [5.10. 格式化I/O](#510-格式化io)
+            - [5.10.1 格式化输出](#5101-格式化输出)
+            - [5.10.2 格式化输入](#5102-格式化输入)
     - [6. 系统数据文件和信息](#6-系统数据文件和信息)
     - [7. 进程环境](#7-进程环境)
     - [8. 进程控制](#8-进程控制)
@@ -227,6 +234,7 @@ int close(int fd);
 
 ### 3.6. lseek
 
+<a id="lseek"></a>
 ```c
 #include <unistd.h>
 
@@ -1883,6 +1891,305 @@ int fputc(int c, FILE *fp);
 int puchar(int c);
 ```
 输出函数与输入函数一样，putchar等同于putc(c, stdout)...
+
+### 5.6. 每次一行I/O
+
+<a id="fgets"></a><a id="gets"></a>
+```c
+#include <stdio.h>
+
+/**
+ * @return buf      成功
+ * @return NULL     已达文件尾端或出错
+ */
+
+char *fgets(char *restrict buf, int n, FILE *restrict fp);
+char *gets()char *buf;
+```
+gets从标准输入读，而fgets从指定的流读。~~gets~~不建议使用,使用gets时不能指定缓冲区的长度，可能造成缓冲区溢出。
+
+<a id="fputs"></a><a id="puts"></a>
+```c
+#include <stdio.h>
+
+/**
+ * @return 非负值   成功
+ * @return EOF     失败
+ */
+
+int fputs(const char *restrict str, FILE *restrict fp);
+int puts(const char *str);
+```
+尽量使用fputs，而不要使用~~puts~~，puts比fputs要多写一个换行符在结尾。
+
+### 5.7. 标准I/O的效率
+
+标准I/O与直接调用read和write函数相比并不慢多少。对于大多数比较复杂的应用程序，最主要的用户CPU时间是由应用本身的各种处理消耗的，而不是由标准I/O例程消耗的。
+
+### 5.8. 二进制I/O
+
+<a id="fread"></a><a id="fwrite"></a>
+```c
+#include <stdio.h>
+
+/**
+ * @return 读或写的对象数
+ */
+
+size_t fread(void *restrict ptr, size_t size, size_t nobj, FILE *restrict fp);
+size_t fwrite(const void *restrict ptr, size_t size, size_t nobj, FILE *restrict fp);
+```
+两种常见用法：
+1.  读或写一个二进制数组。将2~5个元素写到文件上。
+    ```c
+    float data[10];
+
+    if(4 != fwrite(&data[2], sizeof(float), 4, fp)) {
+        err_sys("fwrite error");
+    }
+    ```
+    size为每个数组元素的长度，nobj为欲写的元素个数。
+2.  读或写一个结构。
+    ```c
+    struct {
+        short count;
+        long total;
+        char name[NAMESIZE];
+    } item;
+    
+    if(1 != fwrite(&item, sizeof(item), 1, fp)) {
+        err_sys("fwite, error");
+    }
+    ```
+    size为结构的长度，nobj为1（要写的对象个数）。
+
+对于读，如果出错或到达文件尾端，则此数字可以少于nobj。在这种情况，应调用ferror或feof以判断究竟是哪一种情况。对于写，如果返回值少于所要求的nobj，则出错。
+
+fread和fwrite不具有跨平台性，甚至在同一平台也有可能会出现不同的情况，取决于结构体的结构优化和存储方式。
+
+### 5.9. 定位流
+
+3种定位标准I/O流的方法：
+1.  ftel和fseek 它们假定文件的位置可以存放在一个长整形中。
+2.  ftello和fseeko 它们使用off_t数据类型代替了长整形。
+3.  fgetpos和fsetpos 它们使用一个抽象数据类型fpos_t记录文件的位置，这种数据类型可以根据需要定义为一个足够大的数，用以记录文件位置。
+需要非UNIX系统上运行的应用程序应当使用fgetpos和fsetpos。
+
+<a id="ftell"></a><a id="fseek"></a><a id="rewind"></a>
+```c
+#include <stdio.h>
+
+/**
+ * @return 当前文件位置指示     成功
+ * @return -1L                 出错
+ */
+long ftell(FILE *fp);
+
+/**
+ * @return 0        成功
+ * @return -1       失败
+ */
+int fseek(FILE *fp, long offset, int whence);
+
+void rewind(FILE *fp);
+```
+whence与<a href="#lseek">lseek</a>函数中的设置相同。
+对于文本文件，它们的文件当前位置可能不以简单的字节偏移量来度量。这主要也是在非UNIX系统中，它们可能以不同的格式存放文本文件。为了定位一个文本文件，whence一定要是SEEK_SET，而且offset只有两种值：0（后退到文件的起始位置），或是对该文件的ftell所返回的值。使用rewind函数也可将一个流设置到文件的起始位置。
+
+<a id="ftello"></a><a id="fseeko"></a>
+```c
+#include <stdio.h>
+
+/**
+ * @return 当前文件位置     成功
+ * @return (off_t)-1       失败
+ */
+off_t ftello(FILE *fp);
+
+/**
+ * @return 0        成功
+ * @return -1       失败
+ */
+int fseeko(FILE *fp, off_t offset, int whence);
+```
+
+<a id="fgetpos"></a><a id="fsetpos"></a>
+```c
+#include <stdio.h>
+
+/**
+ * @return 0        成功
+ * @return 非0      失败
+ */
+
+int fgetpos(FILE *restrict fp, fpos_t *restrict pos);
+int fsetpos(FILE *fp, const fpos_t *pos);
+```
+
+### 5.10. 格式化I/O
+
+#### 5.10.1 格式化输出
+
+<a id="printf"></a><a id="fprintf"></a><a id="dprintf"></a><a id="sprintf"></a><a id="snprintf"></a>
+```c
+#include <stdio.h>
+
+/**
+ * @return 输出字符数    成功
+ * @return 负值         输出出错
+ */
+int printf(const char *restrict format, ...);                                   //将格式化数据写到标准输出
+int fprintf(FILE *restrict fp, const char *restrict format, ...);               //写至指定流
+int dprintf(int fd, const char *restrict format, ...);                          //写至指定的文件描述符
+
+/**
+ * @todo   将格式化的字符送入数组buf中
+ * @return 存入数组的字符数     成功
+ * @return 负值                编码出错
+ * @description                可能会造成有buf指向的缓冲区的溢出
+ */
+int sprintf(char *restrict buf, const char *restrict format, ...);              
+
+/**
+ * @todo   在该数组的尾端自动加一个null字节，但该字节不包括在返回值中
+ * @return 将要存入数组的字符数     若缓冲区足够大
+ * @return 负值                   编码出错
+ */
+int snprintf(char *restrict buf, size_t n, const char *restrict format, ...);
+```
+转换说明： `%[flags][fldwidth][precision][lenmodifier]convtype`
+-   flags
+
+    | 标志   | 说明                                               |
+    | :-:    | ------------------------------------------------- |
+    | '      | （撇号）将整数按千位分组字符                         |
+    | -      | 在字段内左对齐输出                                  |
+    | +      | 总是显示带符号转换的正负号                           |
+    | (空格) | 如果第一个字符不是正负号，则在其前面加一个空格         |
+    | #      | 指定另一种转换形式（例如，对于十六进制格式，加0x前缀） |
+    | 0      | 添加前导0（而非空格）进行填充                        |
+
+-   fldwidth 说明最小字段宽度。转换后参数字符数若小于宽度，则多余字符位置用空格填充，字段宽度是一个非负十进制数，或者是一个型号（*）。
+-   precision 说明整数转换后最少输出数字位数、浮点数转换后小数点后的最少位数、字符串转换后最大字节数。精度是一个点（.），其后跟随一个可选的非负十进制数或一个星号（*）。
+-   lenmodifier 参数长度。
+
+    | 长度修饰符 | 说明                                               |
+    | :-------: | -------------------------------------------------- |
+    | hh        | 将相应的参数按`signed`或`unsigned char`类型输出      |
+    | h         | 将相应的参数按`signed`或`unsigned short`类型输出     |
+    | l         | 将相应的参数按`signed`或`unsigned long`类型输出      |
+    | ll        | 将相应的参数按`signed`或`unsigned long long`类型输出 |
+    | j         | `inmax_t`或`uintmax_t`                             |
+    | z         | `size_t`                                           |
+    | t         | `ptrdiff_t`                                        |
+    | L         | `long double`                                      |
+    
+-   convtype 不是可选的。它控制如何解释参数。
+
+    | 转换类型 | 说明                                                                  |
+    | :------: | -------------------------------------------------------------------- |
+    | d、i     | 有符号十进制                                                          |
+    | o        | 无符号八进制                                                          |
+    | u        | 无符号十进制                                                          |
+    | x、X     | 无符号十六进制                                                        |
+    | f、F     | 双精度浮点数                                                          |
+    | e、E     | 指数格式双精度浮点数                                                   |
+    | g、G     | 根据转换后的值解释为f、F、e或E                                          |
+    | a、A     | 十六进制指数格式双精度浮点数                                            |
+    | c        | 字符（若带长度修饰符l，为宽字符）                                       |
+    | s        | 字符串（若带长度修饰符l，为宽字符）                                     |
+    | p        | 指向void的指针                                                        |
+    | n        | 到目前为止，此printf调用输出的字符的数目将被写入到指针所指向的带符号整型中 |
+    | %        | 一个%字符                                                             |
+    | C        | 宽字符（等效于lc）                                                     |
+    | S        | 宽字符串（等效于ls）                                                   |
+
+根据常规的转换说明，转换是按照它们出现在format参数之后的顺序应用于参数的。一种替代的转换说明语法也允许显示地用`%n$`序列来表示第n个参数的形式来命名参数。
+
+5中printf族变体：
+<a id="vprintf"></a><a id="vfprintf"></a><a id="vdprintf"></a><a id="vsprintf"></a><a id="vsnprintf"></a>
+```c
+#include <stdarg.h>
+#include <stdio.h>
+
+/**
+ * @return 输出字符数    成功
+ * @return 负值         输出出错
+ */
+int vprintf(const char *restrict format, va_list arg);
+int vfprintf(FILE *restrict fp, const char *restrict format, va_list arg);
+int vdprintf(int fd, const char *restrict format, va_list arg);
+
+/**
+ * @return 存入数组的字符数     成功
+ * @return 负值                编码出错
+ */
+int vsprintf(char *restrict buf, const char *restrict format, va_list arg);              
+
+/**
+ * @return 将要存入数组的字符数     若缓冲区足够大
+ * @return 负值                   编码出错
+ */
+int vsnprintf(char *restrict buf, size_t n, const char *restrict format, va_list arg);
+```
+
+#### 5.10.2 格式化输入
+
+<a id="scanf"></a><a id="fscanf"></a><a id="sscanf"></a>
+```c
+#include <stdio.h>
+
+/**
+ * @return 赋值的输入项数    成功
+ * @return EOF              输入出错或在任一转换前已达到文件尾端
+ */
+
+int scanf(const char *restrict format, ...);
+int fscanf(FILE *restrict fp, const char *restrict format, ...);
+int sscanf(const char *restrict buf, const char *restrict format, ...);
+```
+转换说明： `%[*][fldwidth][m][lenmodifier]convtype`
+-   \*可选星号（*）用于抑制转换。按照转换说明的其余部分对输入进行转换，但转换结果并不存放在参数中。
+-   fldwidth 最大宽度。
+-   lenmodifier 说明要转换结果赋值的参数大小。
+-   convtype 字段类似于printf族的转换类型字段。
+
+    | 转换类型              | 说明                                                         |
+    | :-------------------: | ----------------------------------------------------------- |
+    | d                     | 有符号十进制，基数为10                                        |
+    | i                     | 有符号十进制，基数由输入格式决定                               |
+    | o                     | 无符号八进制（输入可选地有符号）                               |
+    | u                     | 无符号十进制，基数为10（数可选地有符号）                        |
+    | x、X                  | 无符号十六进制（输入可选地有符号）                              |
+    | a、A、e、E、f、F、g、G | 浮点数                                                        |
+    | c                     | 字符（若带长度修饰符l，为宽字符）                               |
+    | s                     | 字符串（若带长度修饰符l，为宽字符）                             |
+    | [                     | 匹配列出的字符序列，以]终止                                    |
+    | [^                    | 匹配除列出以外的所有字符，以]终止                               |
+    | p                     | 指向void的指针                                                |
+    | n                     | 到目前为止该函数调用读取的字符数将被写入到指针所指向的无符号整型中 |
+    | %                     | 一个%符号                                                     |
+    | C                     | 宽字符（等效于lc）                                             |
+    | S                     | 宽字符串（等效于ls）                                           |
+
+-   m 赋值分配符。它可用于%c、%s以及%[转换符，迫使内存缓冲区分配空间以接纳转换字符串。
+
+scanf函数族同样支持另外一种转换说明。允许显示地命名参数：序列`%n$`代表了第n个参数。
+可变参数scanf族。
+<a id="vscanf"></a><a id="vfscanf"></a><a id="vsscanf"></a>
+```c
+#include <stdarg.h>
+#include <stdio.h>
+
+/**
+ * @return 赋值的输入项数    成功
+ * @return EOF              输入出错或在任一转换前已达到文件尾端
+ */
+
+int vscanf(const char *restrict format, va_list arg);
+int vfscanf(FILE *restrict fp, const char *restrict format, va_list arg);
+int vsscanf(const char *restrict buf, const char *restrict format, va_list arg);
+```
 
 ## 6. 系统数据文件和信息
 ## 7. 进程环境
