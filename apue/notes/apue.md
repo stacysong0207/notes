@@ -59,6 +59,7 @@
         - [5.5 读和写流](#55-读和写流)
             - [5.5.1. 输入函数](#551-输入函数)
             - [5.5.2. 输出函数](#552-输出函数)
+        - [5.6. 每次一行I/O](#56-每次一行io)
     - [6. 系统数据文件和信息](#6-系统数据文件和信息)
     - [7. 进程环境](#7-进程环境)
     - [8. 进程控制](#8-进程控制)
@@ -1883,6 +1884,38 @@ int fputc(int c, FILE *fp);
 int puchar(int c);
 ```
 输出函数与输入函数一样，putchar等同于putc(c, stdout)...
+
+### 5.6. 每次一行I/O
+
+<a id="fgets"></a><a id="gets"></a>
+```c
+#include <stdio.h>
+
+/**
+ * @return buf      成功
+ * @return NULL     已达文件尾端或出错
+ */
+
+char *fgets(char *restrict buf, int n, FILE *restrict fp);
+char *gets()char *buf;
+```
+gets从标准输入读，而fgets从指定的流读。~~gets~~不建议使用,使用gets时不能指定缓冲区的长度，可能造成缓冲区溢出。
+
+<a id="fputs"></a><a id="puts"></a>
+```c
+#include <stdio.h>
+
+/**
+ * @return 非负值   成功
+ * @return EOF     失败
+ */
+
+int fputs(const char *restrict str, FILE *restrict fp);
+int puts(const char *str);
+```
+尽量使用fputs，而不要使用~~puts~~，puts比fputs要多写一个换行符在结尾。
+
+
 
 ## 6. 系统数据文件和信息
 ## 7. 进程环境
