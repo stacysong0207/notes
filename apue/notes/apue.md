@@ -62,6 +62,8 @@
         - [5.6. 每次一行I/O](#56-每次一行io)
         - [5.7. 标准I/O的效率](#57-标准io的效率)
         - [5.8. 二进制I/O](#58-二进制io)
+        - [5.9. 定位流](#59-定位流)
+        - [5.10. 格式化I/O](#510-格式化io)
     - [6. 系统数据文件和信息](#6-系统数据文件和信息)
     - [7. 进程环境](#7-进程环境)
     - [8. 进程控制](#8-进程控制)
@@ -230,6 +232,7 @@ int close(int fd);
 
 ### 3.6. lseek
 
+<a id="lseek"></a>
 ```c
 #include <unistd.h>
 
@@ -1961,6 +1964,67 @@ size_t fwrite(const void *restrict ptr, size_t size, size_t nobj, FILE *restrict
 对于读，如果出错或到达文件尾端，则此数字可以少于nobj。在这种情况，应调用ferror或feof以判断究竟是哪一种情况。对于写，如果返回值少于所要求的nobj，则出错。
 
 fread和fwrite不具有跨平台性，甚至在同一平台也有可能会出现不同的情况，取决于结构体的结构优化和存储方式。
+
+### 5.9. 定位流
+
+3种定位标准I/O流的方法：
+1.  ftel和fseek 它们假定文件的位置可以存放在一个长整形中。
+2.  ftello和fseeko 它们使用off_t数据类型代替了长整形。
+3.  fgetpos和fsetpos 它们使用一个抽象数据类型fpos_t记录文件的位置，这种数据类型可以根据需要定义为一个足够大的数，用以记录文件位置。
+需要非UNIX系统上运行的应用程序应当使用fgetpos和fsetpos。
+
+<a id="ftell"></a><a id="fseek"></a><a id="rewind"></a>
+```c
+#include <stdio.h>
+
+/**
+ * @return 当前文件位置指示     成功
+ * @return -1L                 出错
+ */
+long ftell(FILE *fp);
+
+/**
+ * @return 0        成功
+ * @return -1       失败
+ */
+int fseek(FILE *fp, long offset, int whence);
+
+void rewind(FILE *fp);
+```
+whence与<a href="#lseek">lseek</a>函数中的设置相同。
+对于文本文件，它们的文件当前位置可能不以简单的字节偏移量来度量。这主要也是在非UNIX系统中，它们可能以不同的格式存放文本文件。为了定位一个文本文件，whence一定要是SEEK_SET，而且offset只有两种值：0（后退到文件的起始位置），或是对该文件的ftell所返回的值。使用rewind函数也可将一个流设置到文件的起始位置。
+
+<a id="ftello"></a><a id="fseeko"></a>
+```c
+#include <stdio.h>
+
+/**
+ * @return 当前文件位置     成功
+ * @return (off_t)-1       失败
+ */
+off_t ftello(FILE *fp);
+
+/**
+ * @return 0        成功
+ * @return -1       失败
+ */
+int fseeko(FILE *fp, off_t offset, int whence);
+```
+
+```c
+#include <stdio.h>
+
+/**
+ * @return 0        成功
+ * @return 非0      失败
+ */
+
+int fgetpos(FILE *restrict fp, fpos_t *restrict pos);
+int fsetpos(FILE *fp, const fpos_t *pos);
+```
+
+### 5.10. 格式化I/O
+
 
 
 ## 6. 系统数据文件和信息
