@@ -1,5 +1,5 @@
 #include "apue.h"
-#include "./c_00011_io_fcntl2.c"
+#include "../common/setfl.c"
 
 #define BUFFSIZE 4096
 

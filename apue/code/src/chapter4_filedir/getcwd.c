@@ -1,5 +1,5 @@
 #include "apue.h"
-#include "c_00002_pathname.c"
+#include "../common/pathalloc.c"
 
 int
 main(void)
