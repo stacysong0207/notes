@@ -27,6 +27,8 @@
         - [3.6. 查看源程序](#36-查看源程序)
             - [3.6.1. 显示源代码](#361-显示源代码)
             - [3.6.2. 搜索源代码](#362-搜索源代码)
+            - [3.6.3. 指定源文件的路径](#363-指定源文件的路径)
+            - [3.6.4. 源代码的内存](#364-源代码的内存)
 
 <!-- /TOC -->
 
@@ -193,7 +195,7 @@ Program exited with code 027.
 1.  ```gdb <program>```
 
     program也就是你的执行文件，一般在当然目录下。
-    
+
 2.  ```gdb <program> core```
 
     用gdb同时调试一个运行程序和core文件，core是程序非法执行后core dump后产生的文件。
@@ -220,7 +222,7 @@ GDB启动时，可以加上一些GDB的启动开关，详细的开关可以用gd
 
 -   ```-directory <directory>```
     ```-d <directory>```
-    
+
     加入一个源文件的搜索路径。默认搜索路径是环境变量中PATH所定义的路径。
 
 ## 3. GDB命令概貌
@@ -268,7 +270,7 @@ gdb中，输入命令时，可以不用打全命令，只用打命令的前几�
     (gdb) b func
     Breakpoint 1 at 0x8048458: file hello.c, line 10.
     ```
-    
+
 -   示例二：敲入b按两次TAB键，你会看到所有b打头的命令：
     ```shell
     (gdb) b
@@ -288,7 +290,7 @@ gdb中，输入命令时，可以不用打全命令，只用打命令的前几�
     (gdb) b make_
     ```
     GDB把所有make开头的函数全部例出来给你查看。
-    
+
 -   示例四：调试C++的程序时，有可以函数名一样。如：
     ```shell
     (gdb) b 'bubble( M-? 
@@ -357,7 +359,7 @@ make <make-args>
 
 -   ```break <function> ```
 
-    在进入指定函数时停住。C++中可以使用class::function或function(type,type)格式来指定函数名。    
+    在进入指定函数时停住。C++中可以使用class::function或function(type,type)格式来指定函数名。
 -   ```break <linenum>```
 
     在指定行号停住。
@@ -397,15 +399,15 @@ make <make-args>
 -   ```watch <expr>```
 
     为表达式（变量）expr设置一个观察点。一量表达式值有变化时，马上停住程序。
-        
+
 -   ```rwatch <expr>```
-    
+
     当表达式（变量）expr被读时，停住程序。
-        
+
 -   ```awatch <expr>```
-    
+
     当表达式（变量）的值被读或被写时，停住程序。
-    
+
 -   ```info watchpoints```
 
     列出当前所设置了的所有观察点。
@@ -459,7 +461,8 @@ tcatch <event>
     **disable**所指定的停止点，**breakpoints**为停止点号。如果**什么都不指定**，表示disable所有的停止点。简写命令是**dis**.
 
 -   ```enable [breakpoints] [range...]```
-        enable所指定的停止点，breakpoints为停止点号。
+
+    enable所指定的停止点，breakpoints为停止点号。
 
 -   ```enable [breakpoints] once range...```
 
@@ -537,7 +540,7 @@ Use the "delete" command to delete unwanted breakpoints.
 -   ```continue [ignore-count]```
     ```c [ignore-count]```
     ```fg [ignore-count]```
-    
+
     恢复程序运行，直到程序结束，或是下一个断点到来。ignore-count表示忽略其后的断点次数。continue，c，fg三个命令都是一样的意思。
 
 -   ```step <count>```
@@ -583,27 +586,27 @@ handle <signal> <keywords...>
 -   ```nostop```
 
     当被调试的程序收到信号时，GDB不会停住程序的运行，但会打出消息告诉你收到这种信号。
-        
+
 -   ```stop```
 
     当被调试的程序收到信号时，GDB会停住你的程序。
-        
+
 -   ```print```
 
     当被调试的程序收到信号时，GDB会显示出一条信息。
-        
+
 -   ```noprint```
 
     当被调试的程序收到信号时，GDB不会告诉你收到信号的信息。
-        
+
 -   ```pass```
     ```noignore```
 
     当被调试的程序收到信号时，GDB不处理信号。这表示，GDB会把这个信号交给被调试程序会处理。
-        
+
 -   ```nopass```
     ```ignore```
-            
+
     当被调试的程序收到信号时，GDB不会让被调试程序来处理这个信号。
 
 -   ```info signals```
@@ -713,31 +716,31 @@ ebp at 0xbffff5d4, eip at 0xbffff5d8
 GDB 可以打印出所调试程序的源代码，当然，在程序编译时一定要加上-g的参数，把源程序信息编译到执行文件中。不然就看不到源程序了。当程序停下来以后，GDB会报告程序停在了那个文件的第几行上。你可以用list命令来打印程序的源代码。还是来看一看查看源代码的GDB命令吧。
 
 -   ```list <linenum>```
-    
+
     显示程序第linenum行的周围的源程序。
 
 -   ```list <function>```
 
     显示函数名为function的函数的源程序。
-        
+
 -   ```list```
 
     显示当前行后面的源程序。
 
 -   ```list -```
-    
+
     显示当前行前面的源程序。
 
 一般是打印当前行的上5行和下5行，如果显示函数是是上2行下8行，默认是10行，当然，你也可以定制显示的范围，使用下面命令可以设置一次显示源程序的行数。
-    
+
 -   ```set listsize <count>```
 
-    设置一次显示源代码的行数。    
+    设置一次显示源代码的行数。
 
 -   ```show listsize```
 
     查看当前listsize的设置。
-    
+
 list命令还有下面的用法：
 
 -   ```list <first>, <last>```
@@ -747,7 +750,7 @@ list命令还有下面的用法：
 -   ```list , <last>```
 
     显示从当前行到last行之间的源代码。
-    
+
 -   ```list +```
 
     往后显示源代码。
@@ -773,8 +776,54 @@ list命令还有下面的用法：
 
 向前面搜索。
 
-```reverse-search <regexp>```
+``reverse-search <regexp> ``
 
 全部搜索。
 
 其中，\<regexp>就是正则表达式，也主一个字符串的匹配模式，关于正则表达式，我就不在这里讲了，还请各位查看相关资料。
+
+#### 3.6.3. 指定源文件的路径
+
+某些时候，用-g编译过后的执行程序中只是包括了源文件的名字，没有路径名。GDB提供了可以让你指定源文件的路径的命令，以便GDB进行搜索。
+
+```directory <dirname ... > ```
+```dir <dirname ... > ```
+
+加一个源文件路径到当前路径的前面。如果你要指定多个路径，UNIX下你可以使用“:”，Windows下你可以使用“;”。
+
+```directory```
+
+清除所有的自定义的源文件搜索路径信息。
+
+```show directories```
+
+显示定义了的源文件搜索路径。
+
+#### 3.6.4. 源代码的内存
+
+你可以使用info line命令来查看源代码在内存中的地址。info line后面可以跟“行号”，“函数名”，“文件名:行号”，“文件名:函数名”，这个命令会打印出所指定的源码在运行时的内存地址，如：
+```shell
+(gdb) info line gdb_00001_tst.c:func
+Line 4 of "gdb_00001_tst.c" starts at address 0x4004c4 <func> and ends at 0x4004cb <func+7>.
+```
+还有一个命令（disassemble）你可以查看源程序的当前执行时的机器码，这个命令会把目前内存中的指令dump出来。如下面的示例表示查看函数func的汇编代码。
+```shell
+(gdb) disassemble func
+Dump of assembler code for function func:
+0x00000000004004c4 <+0>:	push   %rbp
+0x00000000004004c5 <+1>:	mov    %rsp,%rbp
+0x00000000004004c8 <+4>:	mov    %edi,-0x14(%rbp)
+0x00000000004004cb <+7>:	movl   $0x0,-0x8(%rbp)
+0x00000000004004d2 <+14>:	movl   $0x0,-0x4(%rbp)
+0x00000000004004d9 <+21>:	jmp    0x4004e5 <func+33>
+0x00000000004004db <+23>:	mov    -0x4(%rbp),%eax
+0x00000000004004de <+26>:	add    %eax,-0x8(%rbp)
+0x00000000004004e1 <+29>:	addl   $0x1,-0x4(%rbp)
+0x00000000004004e5 <+33>:	mov    -0x4(%rbp),%eax
+0x00000000004004e8 <+36>:	cmp    -0x14(%rbp),%eax
+0x00000000004004eb <+39>:	jl     0x4004db <func+23>
+0x00000000004004ed <+41>:	mov    -0x8(%rbp),%eax
+0x00000000004004f0 <+44>:	leaveq 
+0x00000000004004f1 <+45>:	retq   
+End of assembler dump.
+```
