@@ -66,6 +66,7 @@
         - [5.10. 格式化I/O](#510-格式化io)
             - [5.10.1 格式化输出](#5101-格式化输出)
             - [5.10.2 格式化输入](#5102-格式化输入)
+        - [5.11 实现细节](#511-实现细节)
     - [6. 系统数据文件和信息](#6-系统数据文件和信息)
     - [7. 进程环境](#7-进程环境)
     - [8. 进程控制](#8-进程控制)
@@ -2191,6 +2192,22 @@ int vfscanf(FILE *restrict fp, const char *restrict format, va_list arg);
 int vsscanf(const char *restrict buf, const char *restrict format, va_list arg);
 ```
 
+### 5.11 实现细节
+
+在UNIX胸痛中，标准I/O库最终都要调用FILE I/O例程，每个标准I/O流都有一个与其相关联的文件描述符。
+<a id="fileno"></a>
+```c
+#include <stdio.h>
+
+/**
+ * @return 与该流相关的文件描述符
+ */
+int fileno(FILE *fp);
+```
+实现参考书籍 Plauger[1992]The Standard C Library第12章提供了标准I/O库一种实现的全部源代码。
+
+[GNU标准I/O库下载地址][glibc]
+
 ## 6. 系统数据文件和信息
 ## 7. 进程环境
 ## 8. 进程控制
@@ -2221,3 +2238,4 @@ int vsscanf(const char *restrict buf, const char *restrict format, va_list arg);
 [4]: https://github.com/stanleyguo0207/notes/blob/master/apue/res/icon4.png
 [5]: https://github.com/stanleyguo0207/notes/blob/master/apue/res/icon5.png
 [6]: https://github.com/stanleyguo0207/notes/blob/master/apue/res/icon6.png
+[glibc]: http://ftp.gnu.org/gnu/glibc/
