@@ -2208,6 +2208,33 @@ int fileno(FILE *fp);
 
 [GNU标准I/O库下载地址][glibc]
 
+分析variousio.c运行结果
+```shell
+> ./variousio 
+enter any character         ----按下回车
+
+one line to standard error
+stream = stdin, line buffered, buffer size = 1024
+stream = stdout, line buffered, buffer size = 1024
+stream = stderr, unbuffered, buffer size = 1
+stream = /etc/passwd, fully buffered, buffer size = 4096
+```
+
+```shell
+> ./variousio < /etc/group > std.out 2> std.err
+> cat std.err 
+one line to standard error
+> cat std.out 
+enter any character
+stream = stdin, fully buffered, buffer size = 4096
+stream = stdout, fully buffered, buffer size = 4096
+stream = stderr, unbuffered, buffer size = 1
+stream = /etc/passwd, fully buffered, buffer size = 4096
+```
+Centos系统默认是：标准输入、输出连至终端时，它们是行缓冲的。
+当将这两个流重新定向到普通文件时，它们就变成是全缓冲的，其缓冲区长度是该文件系统有限选用的I/O长度。（<a href="#stat">stat</a>结构中得到的st_blksize值）。
+标准错误是不带缓冲的。普通文件是按系统默认全缓冲的。
+
 ## 6. 系统数据文件和信息
 ## 7. 进程环境
 ## 8. 进程控制

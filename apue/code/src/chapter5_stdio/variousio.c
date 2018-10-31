@@ -89,7 +89,7 @@ int buffer_size(FILE *fp)
     return (fp->_bf._size);
 }
 
-#elif defined(_IONBF) //_IO_UNBUFFERED
+#elif defined(_IONBF) //不带缓冲
 
 #ifdef _LP64
 #define _flag __pad[4]
