@@ -36,6 +36,10 @@
             - [3.7.4. 输出格式](#374-输出格式)
             - [3.7.5. 查看内存](#375-查看内存)
             - [3.7.6. 自动显示](#376-自动显示)
+            - [3.7.7. 设置显示选项](#377-设置显示选项)
+            - [3.7.8. 历史记录](#378-历史记录)
+            - [3.7.9. GDB环境变量](#379-gdb环境变量)
+            - [3.7.10. 查看寄存器](#3710-查看寄存器)
 
 <!-- /TOC -->
 
@@ -578,7 +582,7 @@ Use the "delete" command to delete unwanted breakpoints.
 -   ```stepi``` 或 ```si```
     ```nexti``` 或 ```ni```
 
-    单步跟踪一条机器指令！一条程序代码有可能由数条机器指令完成，stepi和nexti可以**单步执行机器指令**。与之一样有相同功能的命令是“display/i $pc” ，当运行完这个命令后，单步跟踪会在打出程序代码的同时打出机器指令（也就是**汇编代码**）
+    单步跟踪一条机器指令！一条程序代码有可能由数条机器指令完成，stepi和nexti可以**单步执行机器指令**。与之一样有相同功能的命令是“display/i \$pc” ，当运行完这个命令后，单步跟踪会在打出程序代码的同时打出机器指令（也就是**汇编代码**）
 
 #### 3.4.9. 信号（Signals）
 
@@ -966,7 +970,7 @@ n/f/u三个参数可以一起使用。例如：
 
 `display/i $pc`
 
-$pc是GDB的环境变量，表示着指令的地址，/i则表示输出格式为机器指令码，也就是汇编。于是当程序停下后，就会出现源代码和机器指令码相对应的情形，这是一个很有意思的功能。
+\$pc是GDB的环境变量，表示着指令的地址，/i则表示输出格式为机器指令码，也就是汇编。于是当程序停下后，就会出现源代码和机器指令码相对应的情形，这是一个很有意思的功能。
 
 下面是一些和display相关的GDB命令：
 
@@ -983,3 +987,155 @@ disable和enalbe不删除自动显示的设置，而只是让其失效和恢复�
 `info display`
 
 查看display设置的自动显示的信息。GDB会打出一张表格，向你报告当然调试中设置了多少个自动显示设置，其中包括，设置的编号，表达式，是否enable。
+
+#### 3.7.7. 设置显示选项
+
+GDB中关于显示的选项比较多，这里我只例举大多数常用的选项。
+
+`set print address`
+`set print address on`
+
+打开地址输出，当程序显示函数信息时，GDB会显出函数的参数地址。系统默认为打开的，如：
+
+```shell
+(gdb) set print addr on
+(gdb) f
+#0  set_quotes (lq=0x34c78 "<<", rq=0x34c88 ">>") at input.c:530
+530         if (lquote != def_lquote)
+```
+
+`set print address off `
+
+关闭函数的参数地址显示，如：
+
+```shell
+(gdb) set print addr off
+(gdb) f
+#0  set_quotes (lq="<<", rq=">>") at input.c:530
+530         if (lquote != def_lquote)
+```
+
+`show print address`
+
+查看当前地址显示选项是否打开。
+    
+`set print array`
+`set print array on`
+
+打开数组显示，打开后当数组显示时，每个元素占一行，如果不打开的话，每个元素则以逗号分隔。这个选项默认是关闭的。与之相关的两个命令如下，我就不再多说了。
+
+`set print array off`
+`show print array`
+
+`set print elements <number-of-elements>`
+
+这个选项主要是设置数组的，如果你的数组太大了，那么就可以指定一个\<number-of-elements>来指定数据显示的最大长度，当到达这个长度时，GDB就不再往下显示了。如果设置为0，则表示不限制。
+
+`show print elements`
+
+查看print elements的选项信息。
+
+`set print null-stop <on/off>`
+
+如果打开了这个选项，那么当显示字符串时，遇到结束符则停止显示。这个选项默认为off。
+
+
+`set print pretty on`
+
+如果打开printf pretty这个选项，那么当GDB显示结构体时会比较漂亮。如：
+```shell
+$1= {
+        next = 0x0,
+        flags = {
+            sweet = 1,
+            sour = 1
+        },
+        meat = 0x54 "Pork"
+    }
+```
+
+`set print pretty off`
+
+关闭printf pretty这个选项，GDB显示结构体时会如下显示：
+```shell
+$1 = {next = 0x0, flags = {sweet = 1, sour = 1}, meat = 0x54 "Pork"}
+```
+
+`show print pretty`
+
+查看GDB是如何显示结构体的。
+
+`set print sevenbit-strings <on/off>`
+
+设置字符显示，是否按“/nnn”的格式显示，如果打开，则字符串或字符数据按/nnn显示，如“/065”。
+
+`show print sevenbit-strings`
+
+查看字符显示开关是否打开。 
+        
+`set print union <on/off>`
+
+设置显示结构体时，是否显式其内的联合体数据。例如有以下数据结构：
+
+```c
+typedef enum {Tree, Bug} Species;
+typedef enum {Big_tree, Acorn, Seedling} Tree_forms;
+typedef enum {Caterpillar, Cocoon, Butterfly} Bug_forms;
+struct thing {
+    Species it;
+    union {
+        Tree_forms tree;
+        Bug_forms bug;
+    } form;
+};
+struct thing foo = {Tree, {Acorn}};
+```
+
+当打开这个开关时，执行 p foo 命令后，会如下显示：
+
+```shell
+$1 = {it = Tree, form = {tree = Acorn, bug = Cocoon}}
+```
+
+当关闭这个开关时，执行 p foo 命令后，会如下显示：
+
+```shell
+$1 = {it = Tree, form = {...}}
+```
+
+`show print union`
+
+查看联合体数据的显示方式
+
+`set print object <on/off>`
+
+在C++中，如果一个对象指针指向其派生类，如果打开这个选项，GDB会自动按照虚方法调用的规则显示输出，如果关闭这个选项的话，GDB就不管虚函数表了。这个选项默认是off。
+
+
+`show print object`
+
+查看对象选项的设置。
+        
+`set print static-members <on/off>`
+
+这个选项表示，当显示一个C++对象中的内容是，是否显示其中的静态数据成员。默认是on。
+
+`show print static-members`
+
+查看静态数据成员选项设置。
+
+`set print vtbl <on/off>`
+
+当此选项打开时，GDB将用比较规整的格式来显示虚函数表时。其默认是关闭的。
+
+`show print vtbl`
+
+查看虚函数显示格式的选项。
+
+#### 3.7.8. 历史记录
+
+当你用GDB的print查看程序运行时的数据时，你每一个print都会被GDB记录下来。GDB会以\$1, \$2, \$3 .....这样的方式为你每一个print命令编上号。于是，你可以使用这个编号访问以前的表达式，如\$1。这个功能所带来的好处是，如果你先前输入了一个比较长的表达式，如果你还想查看这个表达式的值，你可以使用历史记录来访问，省去了重复输入。
+
+#### 3.7.9. GDB环境变量
+
+#### 3.7.10. 查看寄存器
