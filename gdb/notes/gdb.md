@@ -40,6 +40,13 @@
             - [3.7.8. 历史记录](#378-历史记录)
             - [3.7.9. GDB环境变量](#379-gdb环境变量)
             - [3.7.10. 查看寄存器](#3710-查看寄存器)
+        - [3.8. 改变程序的执行](#38-改变程序的执行)
+            - [3.8.1. 修改变量值](#381-修改变量值)
+            - [3.8.2. 跳转执行](#382-跳转执行)
+            - [3.8.3. 产生信号量](#383-产生信号量)
+            - [3.8.4. 强制函数返回](#384-强制函数返回)
+            - [3.8.5. 强制调用函数](#385-强制调用函数)
+    - [4. 在不同语言中使用GDB](#4-在不同语言中使用gdb)
 
 <!-- /TOC -->
 
@@ -1177,3 +1184,123 @@ print bar[$i++]->contents
 
 寄存器中放置了程序运行时的数据，比如程序当前运行的指令地址（ip），程序的当前堆栈地址（sp）等等。你同样可以使用print命令来访问寄存器的情况，只需要在寄存器名字前加一个\$符号就可以了。如：`p $eip`。
 
+### 3.8. 改变程序的执行
+
+一旦使用GDB挂上被调试程序，当程序运行起来后，你可以根据自己的调试思路来动态地在GDB中更改当前被调试程序的运行线路或是其变量的值，这个强大的功能能够让你更好的调试你的程序，比如，你可以在程序的一次运行中走遍程序的所有分支。
+
+#### 3.8.1. 修改变量值
+
+修改被调试程序运行时的变量值，在GDB中很容易实现，使用GDB的print命令即可完成。如：
+
+```shell
+(gdb) print x = 4
+```
+
+`x = 4`这个表达式是C/C++的语法，意为把变量x的值修改为4，如果你当前调试的语言是Pascal，那么你可以使用Pascal的语法：`x := 4`。
+
+在某些时候，很有可能你的变量和GDB中的参数冲突，如：
+
+```shell
+(gdb) whatis width
+type = double
+(gdb) p width
+$4 = 13
+(gdb) set width=47
+Invalid syntax in expression.
+```
+
+因为，set width是GDB的命令，所以，出现了“Invalid syntax in expression的设置错误，此时，你可以使用set var命令来告诉GDB，width不是你GDB的参数，是程序的变量名，如：
+
+```shell
+(gdb) set var width=47
+```
+
+另外，还可能有些情况，GDB并不报告这种错误，所以保险起见，在你改变程序变量取值时，最好都使用set var格式的GDB命令。
+
+#### 3.8.2. 跳转执行
+
+一般来说，被调试程序会按照程序代码的运行顺序依次执行。GDB提供了乱序执行的功能，也就是说，GDB可以修改程序的执行顺序，可以让程序执行随意跳跃。这个功能可以由GDB的jump命令来完：
+
+`jump <linespec>`
+
+指定下一条语句的运行点。\<linespce>可以是文件的行号，可以是file:line格式，可以是+num这种偏移量格式。表示着下一条运行语句从哪里开始。
+
+`jump <address>`
+
+这里的\<address>是代码行的内存地址。
+
+注意，jump命令不会改变当前的程序栈中的内容，所以，当你从一个函数跳到另一个函数时，当函数运行完返回时进行弹栈操作时必然会发生错误，可能结果还是非常奇怪的，甚至于产生程序Core Dump。所以最好是同一个函数中进行跳转。
+
+熟悉汇编的人都知道，程序运行时，有一个寄存器用于保存当前代码所在的内存地址。所以，jump命令也就是改变了这个寄存器中的值。于是，你可以使用`set $pc`来更改跳转执行的地址。如：
+
+```shell
+set $pc = 0x485
+```
+
+#### 3.8.3. 产生信号量
+
+使用singal命令，可以产生一个信号量给被调试的程序。如：中断信号Ctrl+C。这非常方便于程序的调试，可以在程序运行的任意位置设置断点，并在该断点用GDB产生一个信号量，这种精确地在某处产生信号非常有利程序的调试。
+    
+    语法是：signal <singal>，UNIX的系统信号量通常从1到15。所以<singal>取值也在这个范围。
+    
+    single命令和shell的kill命令不同，系统的kill命令发信号给被调试程序时，是由GDB截获的，而single命令所发出一信号则是直接发给被调试程序的。
+
+#### 3.8.4. 强制函数返回
+
+如果你的调试断点在某个函数中，并还有语句没有执行完。你可以使用return命令强制函数忽略还没有执行的语句并返回。
+
+`return`
+`return <expression>`
+
+使用return命令取消当前函数的执行，并立即返回，如果指定了\<expression>，那么该表达式的值会被认作函数的返回值。
+
+#### 3.8.5. 强制调用函数
+
+`call <expr>`
+
+表达式中可以一是函数，以此达到强制调用函数的目的。并显示函数的返回值，如果函数返回值是void，那么就不显示。
+
+另一个相似的命令也可以完成这一功能——print，print后面可以跟表达式，所以也可以用他来调用函数，print和call的不同是，如果函数返回void，call则不显示，print则显示函数返回值，并把该值存入历史数据中。
+
+## 4. 在不同语言中使用GDB
+
+GDB支持下列语言：C, C++, Fortran, PASCAL, Java, Chill, assembly, 和 Modula-2。一般说来，GDB会根据你所调试的程序来确定当然的调试语言，比如：发现文件名后缀为“.c”的，GDB会认为是C程序。文件名后缀为“.C, .cc, .cp, .cpp, .cxx, .c++”的，GDB会认为是C++程序。而后缀是“.f, .F”的，GDB会认为是Fortran程序，还有，后缀为如果是“.s, .S”的会认为是汇编语言。
+
+也就是说，GDB会根据你所调试的程序的语言，来设置自己的语言环境，并让GDB的命令跟着语言环境的改变而改变。比如一些GDB命令需要用到表达式或变量时，这些表达式或变量的语法，完全是根据当前的语言环境而改变的。例如C/C++中对指针的语法是*p，而在Modula-2中则是p^。并且，如果你当前的程序是由几种不同语言一同编译成的，那到在调试过程中，GDB也能根据不同的语言自动地切换语言环境。这种跟着语言环境而改变的功能，真是体贴开发人员的一种设计。
+
+下面是几个相关于GDB语言环境的命令：
+
+`show language`
+
+查看当前的语言环境。如果GDB不能识为你所调试的编程语言，那么，C语言被认为是默认的环境。
+
+`info frame`
+
+查看当前函数的程序语言。
+
+`info source`
+
+查看当前文件的程序语言。
+
+如果GDB没有检测出当前的程序语言，那么你也可以手动设置当前的程序语言。使用set language命令即可做到。
+
+当set language命令后什么也不跟的话，你可以查看GDB所支持的语言种类：
+```shell
+(gdb) set language
+The currently understood settings are:
+
+local or auto    Automatic setting based on source file
+c                Use the C language
+c++              Use the C++ language
+asm              Use the Asm language
+chill            Use the Chill language
+minimal          Use the minimal language
+d                Use the d language
+fortran          Use the Fortran language
+objective-c      Use the objective-c language
+java             Use the Java language
+modula-2         Use the Modula-2 language
+pascal           Use the Pascal language
+scheme           Use the Scheme language
+```  
+于是你可以在set language后跟上被列出来的程序语言名，来设置当前的语言环境。
