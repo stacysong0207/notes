@@ -3,12 +3,14 @@
 <!-- TOC -->
 
 - [习题](#习题)
-    - [1.1. 在系统上验证，除根目录外，目录.和..是不同的。](#11-在系统上验证除根目录外目录和是不同的)
-    - [1.2. 分析[uidgid.c][uidgid]程序的输出，说明进程ID为852和853的进程发生了什么情况？](#12-分析uidgidcuidgid程序的输出说明进程id为852和853的进程发生了什么情况)
+    - [1.1. 练习1](#11-练习1)
+    - [1.2. 练习2](#12-练习2)
 
 <!-- /TOC -->
 
-## 1.1. 在系统上验证，除根目录外，目录.和..是不同的。
+## 1.1. 练习1
+
+在系统上验证，除根目录外，目录.和..是不同的。
 
 ```shell
 [stanley@stanleyAPUE code]$ pwd
@@ -103,6 +105,15 @@ drwxr-xr-x.  13 root root 4.0K Aug 23 03:21 usr
 drwxr-xr-x.  22 root root 4.0K Aug 23 03:28 var
 ```
 
-## 1.2. 分析[uidgid.c][uidgid]程序的输出，说明进程ID为852和853的进程发生了什么情况？
+## 1.2. 练习2
 
-[uidgid]: https://github.com/stanleyguo0207/notes/blob/master/apue/code/src/chapter1_overview/uidgid.c
+分析[processid.c][processid]程序的输出，说明进程ID为852和853的进程发生了什么情况？
+
+```shell
+[stanley@localhost chapter1_overview]$ ./a.out 
+hello world from process ID 852
+[stanley@localhost chapter1_overview]$ ./a.out 
+hello world from process ID 853
+```
+
+[processid]: https://github.com/stanleyguo0207/notes/blob/master/apue/code/src/chapter1_overview/processid.c
